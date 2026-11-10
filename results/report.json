@@ -1,0 +1,145 @@
+{
+  "seeds_main": 20,
+  "seeds_sweep": 10,
+  "pdr_vs_baselines": {
+    "flooding": {
+      "mean_diff": -0.022603551625423,
+      "ci": [
+        -0.0526367928904052,
+        0.009031735657146345
+      ],
+      "wins": 6,
+      "n": 20,
+      "p_value": 0.21616744995117188
+    },
+    "aodv": {
+      "mean_diff": 0.17815967650176884,
+      "ci": [
+        0.14214666403749573,
+        0.215393056701415
+      ],
+      "wins": 20,
+      "n": 20,
+      "p_value": 1.9073486328125e-06
+    },
+    "etx": {
+      "mean_diff": 0.10832840896815736,
+      "ci": [
+        0.08028769749976479,
+        0.13989467710603554
+      ],
+      "wins": 20,
+      "n": 20,
+      "p_value": 1.9073486328125e-06
+    },
+    "trust_etx": {
+      "mean_diff": 0.04743491967779552,
+      "ci": [
+        0.025692473426657092,
+        0.06899123314791866
+      ],
+      "wins": 16,
+      "n": 20,
+      "p_value": 0.000850677490234375
+    }
+  },
+  "forecaster": {
+    "Gossip-learned (GhostMesh)": {
+      "auc": 0.8171107777813708,
+      "ci": [
+        0.7806214619763899,
+        0.8499628163163071
+      ],
+      "pooled_auc": 0.8086152699136971,
+      "positives": 1877,
+      "samples": 58572
+    },
+    "Local-only learning": {
+      "auc": 0.8006550689028265,
+      "ci": [
+        0.7776100992611933,
+        0.8251494453162165
+      ],
+      "pooled_auc": 0.8005104094979995,
+      "positives": 1877,
+      "samples": 58572
+    },
+    "Centralised oracle (offline LR)": {
+      "auc": 0.7997474015649152,
+      "ci": [
+        0.6762268606842454,
+        0.8793771144610165
+      ],
+      "pooled_auc": 0.7618300599300776,
+      "positives": 1877,
+      "samples": 58572
+    },
+    "Battery heuristic": {
+      "auc": 0.6581996109630074,
+      "ci": [
+        0.6012970294564067,
+        0.7065615108727947
+      ],
+      "pooled_auc": 0.6544420102462479,
+      "positives": 1877,
+      "samples": 58572
+    },
+    "Stress sensor only": {
+      "auc": 0.8433679550678406,
+      "ci": [
+        0.8148761437860381,
+        0.8706207017121895
+      ],
+      "pooled_auc": 0.8336848091670733,
+      "positives": 1877,
+      "samples": 58572
+    }
+  },
+  "runtime_s": 338.4,
+  "config": {
+    "n_nodes": 50,
+    "n_gateways": 3,
+    "radio_range": 0.24,
+    "steps": 300,
+    "seed": 0,
+    "traffic_rate": 1.5,
+    "ttl": 40,
+    "node_capacity": 3,
+    "max_retries": 3,
+    "battery_range": [
+      0.45,
+      1.0
+    ],
+    "e_tx": 0.004,
+    "e_rx": 0.001,
+    "e_idle": 0.0007,
+    "e_ctrl": 0.0003,
+    "front_start": 30,
+    "front_speed": 0.0012,
+    "hazard_rate": 0.035,
+    "base_failure": 0.0004,
+    "detect_delay": 6,
+    "malicious_frac": 0.2,
+    "attack_start": 20,
+    "attack_mix": [
+      "blackhole",
+      "grayhole",
+      "onoff"
+    ],
+    "grayhole_drop": 0.5,
+    "onoff_period": 40,
+    "lie_links": true,
+    "badmouth": true,
+    "trust_prior": [
+      2.0,
+      1.0
+    ],
+    "rec_period": 5,
+    "rec_discount": 0.35,
+    "watch_deadline": 4,
+    "horizon": 12,
+    "fc_lr": 1.5,
+    "fc_pos_weight": 2.0,
+    "fc_gossip": true
+  }
+}

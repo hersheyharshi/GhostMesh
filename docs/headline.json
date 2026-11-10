@@ -1,0 +1,17 @@
+{
+ "stats": [
+  {
+   "value": "+11 pts",
+   "label": "SOS delivery vs. OLSR-ETX (47% \u2192 58%)"
+  },
+  {
+   "value": "\u221266%",
+   "label": "packets swallowed by insider attackers"
+  },
+  {
+   "value": "\u221246%",
+   "label": "energy per delivery vs. flooding, at similar delivery"
+  }
+ ],
+ "seeds": 20
+}

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghostmesh"
+version = "1.0.0"
+description = "Predictive, trust-aware routing for decentralised emergency mesh networks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Harshita Pandita"}]
+keywords = ["mesh networks", "routing", "trust", "federated learning", "disaster response", "MANET", "simulation"]
+dependencies = ["numpy>=1.26", "scipy>=1.11", "pandas>=2.1"]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.110", "uvicorn[standard]>=0.27"]
+experiments = ["matplotlib>=3.8", "scikit-learn>=1.4", "networkx>=3.2"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools]
+packages = ["ghostmesh"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

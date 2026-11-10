@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use GhostMesh, please cite it as below."
+title: "GhostMesh: Predictive, Trust-Aware Routing for Decentralised Emergency Mesh Networks"
+authors:
+  - family-names: Pandita
+    given-names: Harshita
+version: 1.0.0
+date-released: 2026-11-11
+license: MIT
+repository-code: "https://github.com/YOUR-USERNAME/ghostmesh"
