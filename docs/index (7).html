@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostMesh · predictive, trust-aware routing for disaster mesh networks</title>
+<meta name="description" content="Interactive replay of GhostMesh vs classic mesh routing protocols under a spreading disaster and insider attacks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090d; --panel:#0d1117; --panel-2:#111823; --line:#1d2633; --line-2:#2a3646;
+  --ink:#e8eef5; --ink-2:#9fb0c3; --ink-3:#64748a;
+  --packet:#38e1ff; --gateway:#3ddc97; --ghost:#b48cff; --hazard:#ff7a1a; --attack:#ff4d5e;
+  --base:#d95926; --gm:#3987e5;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Space Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
+a{color:var(--packet);text-decoration:none} a:hover{text-decoration:underline}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px}
+header.top{display:flex;align-items:center;gap:18px;padding:18px 0 12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{font-size:20px;letter-spacing:.32em;margin:0;font-weight:700}
+.brand small{display:block;color:var(--ink-3);font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-top:2px}
+.spacer{flex:1}
+.badge{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);letter-spacing:.08em}
+.badge.live{border-color:var(--gateway);color:var(--gateway)}
+.badge.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gateway);margin-right:6px;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.toplinks a{font-family:var(--mono);font-size:12px;margin-left:16px;color:var(--ink-2)}
+.hero{padding:26px 0 8px;display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:end}
+.hero h2{font-size:34px;line-height:1.08;margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+.hero h2 em{font-style:normal;color:var(--ghost)}
+.hero p{color:var(--ink-2);margin:0;font-size:15px;line-height:1.55;max-width:62ch}
+.headline{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:26px;font-family:var(--mono);font-weight:600}
+.stat span{color:var(--ink-3);font-size:12px;line-height:1.35;display:block;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 12px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.controls label{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+select,button,input[type=number]{font-family:var(--mono);font-size:12px;background:var(--panel-2);color:var(--ink);border:1px solid var(--line-2);border-radius:7px;padding:6px 9px}
+button{cursor:pointer} button:hover{border-color:var(--ink-3)}
+button.primary{background:var(--gm);border-color:var(--gm);color:#fff;min-width:74px}
+.toggle{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-2);font-family:var(--mono)}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+.panel-head .name{font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+.panel-head .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+canvas.map{display:block;width:100%;aspect-ratio:1/1;cursor:crosshair}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.kpi{padding:9px 12px;border-right:1px solid var(--line)} .kpi:last-child{border-right:0}
+.kpi b{font-family:var(--mono);font-size:18px;display:block}
+.kpi span{font-size:11px;color:var(--ink-3)}
+.timeline{display:flex;align-items:center;gap:12px;margin:14px 0 6px}
+.timeline input[type=range]{flex:1;accent-color:var(--gm)}
+.tlabel{font-family:var(--mono);font-size:12px;color:var(--ink-2);min-width:92px;text-align:right}
+.lower{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;margin-top:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card h3{margin:0 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;font-size:12px;color:var(--ink-2)}
+.legend div{display:flex;align-items:center;gap:8px}
+.legend svg{flex:none}
+#log{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);height:150px;overflow:auto;margin:0;padding:0;list-style:none}
+#log li{padding:2px 0;border-bottom:1px dashed #141c27}
+#log li .t{color:var(--ink-3);display:inline-block;width:46px}
+#log li.gm{color:#9cc4f5} #log li.bad{color:#ff98a1} #log li.haz{color:#ffb27a} #log li.gh{color:#d2bcff}
+#chart{width:100%;height:210px;display:block}
+.tip{position:fixed;pointer-events:none;background:#0b111a;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:11.5px;color:var(--ink);display:none;z-index:9;white-space:nowrap;box-shadow:0 8px 30px #0008}
+.tip .k{color:var(--ink-3)}
+.explain{margin:28px 0 40px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.explain .card p{color:var(--ink-2);font-size:13.5px;line-height:1.55;margin:0}
+.explain .card h4{margin:0 0 6px;font-size:15px}
+footer{border-top:1px solid var(--line);padding:16px 0 30px;color:var(--ink-3);font-family:var(--mono);font-size:11.5px}
+.hint{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+@media (max-width:900px){.hero,.stage,.lower,.explain{grid-template-columns:1fr}.headline{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <g stroke="#2a3646" stroke-width="1.4"><line x1="6" y1="10" x2="17" y2="5"/><line x1="17" y1="5" x2="28" y2="11"/><line x1="6" y1="10" x2="10" y2="25"/><line x1="10" y1="25" x2="24" y2="27"/><line x1="28" y1="11" x2="24" y2="27"/><line x1="17" y1="5" x2="17" y2="17"/><line x1="17" y1="17" x2="24" y2="27"/></g>
+        <circle cx="6" cy="10" r="2.6" fill="#c9d6e3"/><circle cx="17" cy="5" r="2.6" fill="#c9d6e3"/><circle cx="28" cy="11" r="2.6" fill="#3ddc97"/>
+        <circle cx="10" cy="25" r="2.6" fill="#c9d6e3"/><circle cx="24" cy="27" r="2.6" fill="#c9d6e3"/>
+        <circle cx="17" cy="17" r="3.4" fill="none" stroke="#b48cff" stroke-width="1.4" stroke-dasharray="2 2"/>
+      </svg>
+      <div><h1>GHOSTMESH</h1><small>predictive · trust-aware · decentralised</small></div>
+    </div>
+    <span class="spacer"></span>
+    <span id="mode" class="badge">REPLAY</span>
+    <nav class="toplinks"><a href="https://github.com/hersheyharshi/GhostMesh">GitHub</a><a href="https://github.com/hersheyharshi/GhostMesh/blob/main/docs/REPORT.md">Technical report</a></nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h2>Routing SOS traffic around attackers and <em>ghosts</em> — nodes that are dead but still in everyone's routing table.</h2>
+      <p>Same disaster, same attackers, same random seed. Left: a classic protocol. Right: GhostMesh, which fuses Bayesian trust, link-claim verification, a failure forecaster learned by gossip between nodes, and ant-style pheromone reinforcement. Scrub the timeline, hover nodes, or run it live against the Python engine.</p>
+    </div>
+    <div class="headline" id="headline"></div>
+  </section>
+
+  <div class="controls">
+    <button id="play" class="primary">▶ Play</button>
+    <button id="back" title="Step back">◀︎</button>
+    <button id="fwd" title="Step forward">▶︎</button>
+    <label for="speed">speed</label>
+    <select id="speed"><option value="4">4 / s</option><option value="10" selected>10 / s</option><option value="20">20 / s</option><option value="40">40 / s</option></select>
+    <label for="baseline">compare against</label>
+    <select id="baseline"></select>
+    <label for="seed">scenario</label>
+    <select id="seed"></select>
+    <span class="toggle"><input type="checkbox" id="reveal"><label for="reveal" style="text-transform:none;color:var(--ink-2);font-size:12px">reveal attackers (ground truth)</label></span>
+    <span class="spacer"></span>
+    <span class="hint" id="livehint"></span>
+    <button id="golive" style="display:none">● Run live</button>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-head"><span class="name"><i class="swatch" style="background:var(--base)"></i><span id="nameA">Baseline</span></span><span class="sub" id="subA"></span></div>
+      <canvas class="map" id="mapA" aria-label="Network map, baseline protocol"></canvas>
+      <div class="kpis" id="kpiA"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="name"><i class="swatch" style="background:var(--gm)"></i>GhostMesh</span><span class="sub">trust · forecast · pheromone</span></div>
+      <canvas class="map" id="mapB" aria-label="Network map, GhostMesh"></canvas>
+      <div class="kpis" id="kpiB"></div>
+    </div>
+  </div>
+
+  <div class="timeline">
+    <input type="range" id="scrub" min="0" max="299" value="0" aria-label="Simulation time">
+    <span class="tlabel" id="tlabel">t = 0</span>
+  </div>
+
+  <div class="lower">
+    <div class="card">
+      <h3>Delivery ratio so far</h3>
+      <svg id="chart" role="img" aria-label="Cumulative delivery ratio of both protocols over time"></svg>
+    </div>
+    <div class="card">
+      <h3>Event log</h3>
+      <ul id="log"></ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Map key</h3>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <section class="explain">
+    <div class="card"><h4>Who can you trust?</h4><p>Nodes watch whether neighbours actually forward what they are given, cross-check every advertised link against their own measurement, and gossip opinions. Liars lose credibility when their gossip contradicts first-hand experience. Rings on the GhostMesh map show distrust as it forms.</p></div>
+    <div class="card"><h4>Who is about to die?</h4><p>Every node runs a tiny logistic model on its own telemetry (battery, heat, neighbour churn). Models are averaged with neighbours each step — federated learning with no server — and each node advertises its own failure risk. Amber halos are high predicted risk. It predicts deaths well (AUC 0.82), though in these scenarios it barely changes delivery; the report explains why.</p></div>
+    <div class="card"><h4>Which paths work?</h4><p>Delivered packets leave pheromone on the links they used; links that swallow packets lose it. Routes that keep working get cheaper, as in ant-colony foraging, so the mesh learns from outcomes as well as from beliefs. Ablations show this matters far less than the trust defences.</p></div>
+  </section>
+
+  <footer>GhostMesh · built by Harshita Pandita · simulation results are from a discrete-time model; see the technical report for assumptions and limitations.</footer>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const C = {packet:css("--packet"), gw:css("--gateway"), ghost:css("--ghost"), hazard:css("--hazard"),
+           attack:css("--attack"), ink:"#c9d6e3", dim:"#3a4656", base:css("--base"), gm:css("--gm")};
+
+const state = {data:null, static:null, labels:{}, baseline:"etx", t:0, frac:0, playing:false,
+               fps:10, last:0, live:false, ws:null, liveFrames:{baseline:[], ghostmesh:[]}, hover:{panel:null, node:-1},
+               bursts:[]};
+
+// ---------------------------------------------------------------- data access
+function frames(which){
+  if(state.live) return state.liveFrames[which === "ghostmesh" ? "ghostmesh" : "baseline"];
+  return state.data.runs[which === "ghostmesh" ? "ghostmesh" : state.baseline];
+}
+function nFrames(){ return frames("ghostmesh").length; }
+
+// ---------------------------------------------------------------- canvas setup
+const maps = {A:$("mapA"), B:$("mapB")};
+function sizeCanvas(cv){
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  cv.width = Math.round(r.width*d); cv.height = Math.round(r.width*d);
+  cv._scale = d; cv._W = r.width;
+}
+function resize(){ Object.values(maps).forEach(sizeCanvas); drawChart(); }
+window.addEventListener("resize", resize);
+
+const PAD = 18;
+function P(cv, p){ const W = cv._W - 2*PAD; return [PAD + p[0]*W, PAD + (1-p[1])*W]; }
+
+// ---------------------------------------------------------------- drawing
+function drawMap(cv, which, f, fprev, frac){
+  const st = state.static, ctx = cv.getContext("2d"), W = cv._W;
+  ctx.setTransform(cv._scale,0,0,cv._scale,0,0);
+  ctx.clearRect(0,0,W,W);
+  // grid
+  ctx.strokeStyle = "#111925"; ctx.lineWidth = 1;
+  for(let i=0;i<=10;i++){ const x = PAD + i*(W-2*PAD)/10;
+    ctx.beginPath(); ctx.moveTo(x,PAD); ctx.lineTo(x,W-PAD); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD,x); ctx.lineTo(W-PAD,x); ctx.stroke(); }
+  if(!f) return;
+  // hazard front
+  if(f.front > 0){
+    const [ox,oy] = P(cv, st.front_origin), R = f.front*(W-2*PAD);
+    const g = ctx.createRadialGradient(ox,oy,R*0.1,ox,oy,R);
+    g.addColorStop(0,"rgba(255,122,26,0.22)"); g.addColorStop(1,"rgba(255,122,26,0.07)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ox,oy,R,0,7); ctx.fill();
+    ctx.setLineDash([5,5]); ctx.lineDashOffset = -performance.now()/60;
+    ctx.strokeStyle = "rgba(255,122,26,0.75)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(ox,oy,R,0,7); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  const dead = new Set(f.dead), ghosts = new Set(f.ghosts), attackers = new Set(f.attackers);
+  const pos = st.pos.map(p => P(cv,p));
+  // links
+  ctx.lineWidth = 1;
+  st.edges.forEach((e,i) => {
+    if(dead.has(e[0]) || dead.has(e[1])) return;
+    const q = f.q[i]/99; if(q < 0.05) return;
+    ctx.strokeStyle = `rgba(110,150,195,${0.06 + 0.32*q})`;
+    ctx.beginPath(); ctx.moveTo(...pos[e[0]]); ctx.lineTo(...pos[e[1]]); ctx.stroke();
+  });
+  // packets in flight on this frame's hops
+  const hops = f.hops || [];
+  for(const [u,v,ok] of hops){
+    const a = pos[u], b = pos[v], k = Math.min(1, frac*1.15);
+    const x = a[0]+(b[0]-a[0])*k, y = a[1]+(b[1]-a[1])*k;
+    ctx.strokeStyle = ok ? "rgba(56,225,255,0.55)" : "rgba(120,135,155,0.35)"; ctx.lineWidth = ok ? 1.8 : 1;
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(x,y); ctx.stroke();
+    ctx.fillStyle = ok ? C.packet : "#7a8797"; ctx.beginPath(); ctx.arc(x,y,ok?2.6:1.8,0,7); ctx.fill();
+  }
+  // nodes
+  const gws = new Set(st.gateways);
+  const isTrust = f.rep && f.rep.length;
+  for(let i=0;i<st.n;i++){
+    const [x,y] = pos[i];
+    if(gws.has(i)){
+      const pulse = 4 + 3*Math.sin(performance.now()/350 + i);
+      ctx.strokeStyle = "rgba(61,220,151,0.35)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x,y,10+pulse,0,7); ctx.stroke();
+      ctx.fillStyle = C.gw; ctx.beginPath();
+      ctx.moveTo(x,y-9); ctx.lineTo(x+8,y-4.5); ctx.lineTo(x+8,y+4.5); ctx.lineTo(x,y+9); ctx.lineTo(x-8,y+4.5); ctx.lineTo(x-8,y-4.5); ctx.closePath(); ctx.fill();
+      continue;
+    }
+    if(dead.has(i)){
+      if(ghosts.has(i)){
+        const a = 0.45 + 0.4*Math.sin(performance.now()/180 + i);
+        ctx.strokeStyle = `rgba(180,140,255,${a})`; ctx.lineWidth = 1.6; ctx.setLineDash([2,2]);
+        ctx.beginPath(); ctx.arc(x,y,7,0,7); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = `rgba(180,140,255,${a*0.35})`; ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fill();
+      } else {
+        ctx.strokeStyle = "#2b3543"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.stroke();
+      }
+      continue;
+    }
+    // forecast risk halo
+    const risk = f.risk[i]/100;
+    if(which === "ghostmesh" && risk > 0.3){
+      ctx.fillStyle = `rgba(255,170,60,${Math.min(0.45, (risk-0.25)*0.8)})`;
+      ctx.beginPath(); ctx.arc(x,y,9+6*risk,0,7); ctx.fill();
+    }
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x,y,4.4,0,7); ctx.fill();
+    // distrust ring (only protocols that keep trust)
+    if(isTrust && f.rep[i] >= 0 && f.rep[i] < 35){
+      ctx.strokeStyle = "rgba(255,77,94,0.95)";
+      ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x,y,7.5,0,7); ctx.stroke();
+    }
+    if($("reveal").checked && attackers.has(i)){
+      ctx.strokeStyle = C.attack; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(x-6,y-6); ctx.lineTo(x+6,y+6); ctx.moveTo(x+6,y-6); ctx.lineTo(x-6,y+6); ctx.stroke();
+    }
+  }
+  // drop bursts
+  for(const u of (f.drops||[])){
+    const [x,y] = pos[u], r = 6 + 14*frac;
+    ctx.strokeStyle = `rgba(255,77,94,${1-frac})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.stroke();
+  }
+  // hover highlight
+  if(state.hover.node >= 0 && state.hover.panel === cv){
+    const [x,y] = pos[state.hover.node];
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x,y,11,0,7); ctx.stroke();
+  }
+}
+
+function kpis(el, f){
+  if(!f){ el.innerHTML = ""; return; }
+  const n = state.static.n - state.static.gateways.length;
+  const alive = n - f.dead.length;
+  const pdr = f.gen ? (100*f.dlv/f.gen).toFixed(1) + "%" : "—";
+  el.innerHTML = `
+    <div class="kpi"><b>${pdr}</b><span>SOS delivered (${f.dlv}/${f.gen})</span></div>
+    <div class="kpi"><b style="color:#ff98a1">${f.adv}</b><span>swallowed by attackers</span></div>
+    <div class="kpi"><b style="color:#d2bcff">${f.ghost}</b><span>lost with dying nodes</span></div>
+    <div class="kpi"><b>${alive}<small style="color:var(--ink-3);font-size:12px">/${n}</small></b><span>relays alive</span></div>`;
+}
+
+// ---------------------------------------------------------------- chart (SVG)
+function series(which){ return frames(which).map(f => f.gen ? f.dlv/f.gen : null); }
+function drawChart(){
+  const svg = $("chart"); if(!state.static) return;
+  const W = svg.clientWidth, H = svg.clientHeight, m = {l:38,r:96,t:10,b:24};
+  const T = state.live ? state.static.steps : nFrames();
+  const x = t => m.l + (W-m.l-m.r)*t/Math.max(T-1,1), y = v => m.t + (H-m.t-m.b)*(1-v);
+  let s = "";
+  for(const v of [0,0.25,0.5,0.75,1]){
+    s += `<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}" stroke="#18212d"/>`;
+    s += `<text x="${m.l-6}" y="${y(v)+4}" fill="#64748a" font-size="10" text-anchor="end" font-family="JetBrains Mono, ui-monospace, monospace">${Math.round(v*100)}%</text>`;
+  }
+  for(let t=0;t<T;t+=50) s += `<text x="${x(t)}" y="${H-6}" fill="#64748a" font-size="10" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace">${t}</text>`;
+  const lines = [["baseline", C.base, labelOf(state.baseline)], ["ghostmesh", C.gm, "GhostMesh"]];
+  for(const [w,col,name] of lines){
+    const ys = series(w); let d = "", last = null;
+    ys.forEach((v,i) => { if(v===null || i < 8) return; d += (d?"L":"M") + x(i).toFixed(1) + "," + y(v).toFixed(1); last = [i,v]; });
+    s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
+    if(last) s += `<text x="${x(last[0])+6}" y="${y(last[1])+4}" fill="#c9d6e3" font-size="11" font-family="Space Grotesk, system-ui, sans-serif">${name} ${(last[1]*100).toFixed(0)}%</text>`;
+  }
+  const tt = Math.min(state.t, T-1);
+  s += `<line x1="${x(tt)}" x2="${x(tt)}" y1="${m.t}" y2="${H-m.b}" stroke="#9fb0c3" stroke-dasharray="3 3"/>`;
+  s += `<rect id="chit" x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent"/>`;
+  svg.innerHTML = s;
+  const hit = $("chit");
+  hit.onmousemove = (ev) => {
+    const r = svg.getBoundingClientRect(), t = Math.round((ev.clientX - r.left - m.l)/(W-m.l-m.r)*(T-1));
+    const a = series("baseline")[t], b = series("ghostmesh")[t];
+    if(a == null && b == null) return hideTip();
+    showTip(ev, `<span class="k">t</span> ${t}<br><span style="color:${C.base}">■</span> ${labelOf(state.baseline)} ${a==null?"—":(a*100).toFixed(1)+"%"}<br><span style="color:${C.gm}">■</span> GhostMesh ${b==null?"—":(b*100).toFixed(1)+"%"}`);
+  };
+  hit.onmouseleave = hideTip;
+  hit.onclick = (ev) => { const r = svg.getBoundingClientRect(); seek(Math.round((ev.clientX - r.left - m.l)/(W-m.l-m.r)*(T-1))); };
+}
+
+// ---------------------------------------------------------------- tooltip / hover
+function showTip(ev, html){ const t = $("tip"); t.innerHTML = html; t.style.display = "block";
+  t.style.left = (ev.clientX + 14) + "px"; t.style.top = (ev.clientY + 12) + "px"; }
+function hideTip(){ $("tip").style.display = "none"; }
+function nodeAt(cv, ev){
+  const r = cv.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  let best = -1, bd = 14;
+  state.static.pos.forEach((p,i) => { const [x,y] = P(cv,p), d = Math.hypot(x-mx,y-my); if(d < bd){ bd = d; best = i; } });
+  return best;
+}
+for(const [key,cv] of Object.entries(maps)){
+  cv.addEventListener("mousemove", ev => {
+    if(!state.static) return;
+    const i = nodeAt(cv, ev); state.hover = {panel:cv, node:i};
+    if(i < 0) return hideTip();
+    const which = key === "B" ? "ghostmesh" : "baseline", fr = frames(which)[Math.min(state.t, nFrames()-1)];
+    if(!fr) return;
+    const st = state.static, gw = st.gateways.includes(i), dead = fr.dead.includes(i), ghost = fr.ghosts.includes(i);
+    const role = gw ? "gateway (uplink)" : dead ? (ghost ? "GHOST — dead, still advertised" : "dead") : "relay";
+    let h = `<b>node ${i}</b> · ${role}`;
+    if(!gw){
+      h += `<br><span class="k">battery</span> ${fr.battery[i]}%  <span class="k">predicted risk</span> ${fr.risk[i]}%`;
+      if(fr.rep) h += `<br><span class="k">reputation</span> ${fr.rep[i] < 0 ? "no evidence yet" : fr.rep[i] + "%"}`;
+      if($("reveal").checked && fr.attackers.includes(i)) h += `<br><span style="color:${C.attack}">attacker: ${st.attack_type[i] || "blackhole"}</span>`;
+    }
+    if(state.live && !gw) h += `<br><span class="k">click: destroy · shift-click: compromise</span>`;
+    showTip(ev, h);
+  });
+  cv.addEventListener("mouseleave", () => { state.hover = {panel:null,node:-1}; hideTip(); });
+  cv.addEventListener("click", ev => {
+    if(!state.live || !state.ws) return;
+    const i = nodeAt(cv, ev); if(i < 0) return;
+    state.ws.send(JSON.stringify({cmd: ev.shiftKey ? "compromise" : "kill", node: i}));
+    addLog(state.t, ev.shiftKey ? `operator compromised node ${i}` : `operator destroyed node ${i}`, "bad");
+  });
+}
+
+// ---------------------------------------------------------------- event log
+function addLog(t, msg, cls){ const li = document.createElement("li"); li.className = cls||"";
+  li.innerHTML = `<span class="t">t=${t}</span>${msg}`; $("log").prepend(li); }
+function rebuildLog(upto){
+  $("log").innerHTML = "";
+  const A = frames("baseline"), B = frames("ghostmesh"), st = state.static;
+  const ev = [];
+  let ignited = false; const isolated = new Set(), seenDead = new Set();
+  for(let t=0; t<=Math.min(upto, B.length-1); t++){
+    const f = B[t];
+    if(!ignited && f.front > 0){ ev.push([t,"hazard front ignites","haz"]); ignited = true; }
+    for(const d of f.dead) if(!seenDead.has(d)){ seenDead.add(d); ev.push([t,`node ${d} died → ghost for a few steps`,"gh"]); }
+    if(f.rep) for(const a of f.attackers) if(!isolated.has(a) && f.rep[a] >= 0 && f.rep[a] < 35){ isolated.add(a); ev.push([t,`GhostMesh isolates attacker ${a} (${st.attack_type[a]||"?"})`,"gm"]); }
+    if(t>0 && A[t] && A[t].adv - A[t-1].adv >= 3) ev.push([t,`${labelOf(state.baseline)}: ${A[t].adv - A[t-1].adv} packets swallowed this step`,"bad"]);
+  }
+  ev.slice(-80).forEach(e => addLog(...e));
+}
+
+// ---------------------------------------------------------------- playback
+function labelOf(r){ return (state.labels && state.labels[r]) || r; }
+function render(){
+  const T = nFrames(); if(!T) return;
+  const t = Math.min(state.t, T-1);
+  const fa = frames("baseline")[t], fb = frames("ghostmesh")[t];
+  drawMap(maps.A, state.baseline, fa, null, state.frac);
+  drawMap(maps.B, "ghostmesh", fb, null, state.frac);
+}
+function updatePanels(){
+  const T = nFrames(); if(!T) return;
+  const t = Math.min(state.t, T-1);
+  kpis($("kpiA"), frames("baseline")[t]); kpis($("kpiB"), frames("ghostmesh")[t]);
+  $("scrub").max = Math.max(T-1, 0); $("scrub").value = t;
+  $("tlabel").textContent = `t = ${t} / ${(state.live ? state.static.steps : T) - 1}`;
+  $("nameA").textContent = labelOf(state.baseline);
+  drawChart();
+}
+function seek(t){ state.t = Math.max(0, Math.min(t, nFrames()-1)); state.frac = 1; updatePanels(); rebuildLog(state.t); }
+function loop(ts){
+  if(state.playing && !state.live){
+    const dt = (ts - state.last)/1000; state.last = ts;
+    state.frac += dt*state.fps;
+    while(state.frac >= 1){
+      state.frac -= 1;
+      if(state.t < nFrames()-1){ state.t++; updatePanels(); appendLog(state.t); }
+      else { setPlaying(false); state.frac = 1; break; }
+    }
+  } else if(state.live){
+    state.frac = Math.min(1, state.frac + (ts - state.last)/1000*state.fps); state.last = ts;
+  } else state.last = ts;
+  render();
+  requestAnimationFrame(loop);
+}
+function appendLog(t){ // incremental log during playback
+  const B = frames("ghostmesh"), A = frames("baseline"), f = B[t], p = B[t-1]; if(!f || !p) return;
+  if(p.front === 0 && f.front > 0) addLog(t,"hazard front ignites","haz");
+  for(const d of f.dead) if(!p.dead.includes(d)) addLog(t,`node ${d} died → ghost for a few steps`,"gh");
+  if(f.rep) for(const a of f.attackers) if(f.rep[a] >= 0 && f.rep[a] < 35 && !(p.rep[a] >= 0 && p.rep[a] < 35) && !logged.has(a)){ logged.add(a); addLog(t,`GhostMesh isolates attacker ${a} (${state.static.attack_type[a]||"?"})`,"gm"); }
+  if(A[t] && A[t-1] && A[t].adv - A[t-1].adv >= 3) addLog(t,`${labelOf(state.baseline)}: ${A[t].adv - A[t-1].adv} packets swallowed this step`,"bad");
+}
+const logged = new Set();
+function setPlaying(p){
+  state.playing = p;
+  $("play").textContent = p ? "❚❚ Pause" : "▶ Play";
+  if(state.live && state.ws) state.ws.send(JSON.stringify({cmd: p ? "resume" : "pause"}));
+}
+
+$("play").onclick = () => { if(!state.live && state.t >= nFrames()-1){ seek(0); logged.clear(); } setPlaying(!state.playing); };
+$("back").onclick = () => { setPlaying(false); seek(state.t-1); };
+$("fwd").onclick = () => { setPlaying(false); seek(state.t+1); };
+$("scrub").oninput = (e) => { setPlaying(false); seek(+e.target.value); logged.clear(); };
+$("speed").onchange = (e) => { state.fps = +e.target.value; if(state.live && state.ws) state.ws.send(JSON.stringify({cmd:"speed", fps:state.fps})); };
+$("baseline").onchange = (e) => { state.baseline = e.target.value; if(state.live) startLive(); else { updatePanels(); rebuildLog(state.t); } };
+$("seed").onchange = (e) => state.live ? startLive() : loadSeed(+e.target.value);
+$("reveal").onchange = () => render();
+window.addEventListener("keydown", e => { if(e.code === "Space" && e.target === document.body){ e.preventDefault(); $("play").click(); }
+  if(e.code === "ArrowRight") $("fwd").click(); if(e.code === "ArrowLeft") $("back").click(); });
+
+// ---------------------------------------------------------------- legend + headline
+function legend(){
+  const item = (svg, txt) => `<div><svg width="26" height="22" viewBox="0 0 26 22">${svg}</svg>${txt}</div>`;
+  $("legend").innerHTML = [
+    item(`<path d="M13 2 L21 6.5 L21 15.5 L13 20 L5 15.5 L5 6.5Z" fill="${C.gw}"/>`, "gateway — uplink via drone / satellite"),
+    item(`<circle cx="13" cy="11" r="4.4" fill="${C.ink}"/>`, "relay node (rescuer handset, sensor)"),
+    item(`<line x1="2" y1="11" x2="18" y2="11" stroke="${C.packet}" stroke-width="1.8"/><circle cx="18" cy="11" r="2.6" fill="${C.packet}"/>`, "SOS packet hop (grey = failed attempt)"),
+    item(`<circle cx="13" cy="11" r="7" fill="none" stroke="${C.ghost}" stroke-dasharray="2 2" stroke-width="1.6"/>`, "ghost — dead but still in routing tables"),
+    item(`<circle cx="13" cy="11" r="7.5" fill="none" stroke="${C.attack}" stroke-width="2.2"/><circle cx="13" cy="11" r="4.4" fill="${C.ink}"/>`, "distrusted (reputation < 35%)"),
+    item(`<circle cx="13" cy="11" r="9" fill="rgba(255,170,60,.4)"/><circle cx="13" cy="11" r="4.4" fill="${C.ink}"/>`, "high forecast failure risk (GhostMesh)"),
+    item(`<circle cx="13" cy="11" r="9" fill="none" stroke="${C.attack}" stroke-width="2"/>`, "packet swallowed by an attacker"),
+    item(`<circle cx="13" cy="11" r="9" fill="rgba(255,122,26,.18)" stroke="${C.hazard}" stroke-dasharray="3 3"/>`, "spreading hazard front (fire / flood)"),
+  ].join("");
+}
+async function headline(){
+  try{
+    const h = await (await fetch("headline.json")).json();
+    $("headline").innerHTML = h.stats.map(s => `<div class="stat"><b>${s.value}</b><span>${s.label}</span></div>`).join("");
+  }catch(e){ $("headline").innerHTML = ""; }
+}
+
+// ---------------------------------------------------------------- loading
+async function loadSeed(seed){
+  const d = await (await fetch(`traces/seed_${seed}.json`)).json();
+  state.data = d; state.static = d.static; state.labels = d.labels;
+  const sel = $("baseline"); const keep = state.baseline;
+  sel.innerHTML = Object.keys(d.runs).filter(r => r !== "ghostmesh").map(r => `<option value="${r}">${labelOf(r)}</option>`).join("");
+  state.baseline = Object.keys(d.runs).includes(keep) ? keep : "etx"; sel.value = state.baseline;
+  $("subA").textContent = `seed ${seed} · ${d.static.malicious.length} attackers`;
+  logged.clear(); seek(0); resize();
+}
+async function init(){
+  legend(); headline(); resize();
+  let seeds = [4], labels = {};
+  try{ const ix = await (await fetch("traces/index.json")).json(); seeds = ix.seeds; labels = ix.labels || {}; }catch(e){}
+  $("seed").innerHTML = seeds.map(s => `<option value="${s}">${labels[s] || "seed " + s}</option>`).join("");
+  await loadSeed(seeds[0]);
+  probeLive();
+  requestAnimationFrame(loop);
+}
+
+// ---------------------------------------------------------------- live mode
+function probeLive(){
+  if(!location.protocol.startsWith("http") || location.hostname.endsWith("github.io")) return;
+  fetch("api/health").then(r => r.ok ? r.json() : null).then(j => {
+    if(!j) return;
+    $("golive").style.display = ""; $("livehint").textContent = "Python engine detected";
+    $("golive").onclick = () => state.live ? stopLive() : startLive();
+  }).catch(() => {});
+}
+function startLive(){
+  if(state.ws) state.ws.close();
+  const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws");
+  state.ws = ws; state.live = true; state.liveFrames = {baseline:[], ghostmesh:[]};
+  $("mode").textContent = "LIVE"; $("mode").classList.add("live"); $("golive").textContent = "■ Stop live";
+  $("livehint").textContent = "click a node to destroy it · shift-click to compromise it";
+  $("log").innerHTML = "";
+  ws.onopen = () => ws.send(JSON.stringify({cmd:"start", seed:+$("seed").value || 3, baseline:state.baseline}));
+  ws.onmessage = (m) => {
+    const msg = JSON.parse(m.data);
+    if(msg.type === "static"){ state.static = msg; state.labels = state.labels || {}; state.t = 0; setPlaying(true);
+      ws.send(JSON.stringify({cmd:"speed", fps:state.fps})); }
+    else if(msg.type === "frame"){
+      state.liveFrames.baseline.push(msg.frames.baseline); state.liveFrames.ghostmesh.push(msg.frames.ghostmesh);
+      state.t = state.liveFrames.ghostmesh.length - 1; state.frac = 0; updatePanels(); appendLog(state.t);
+    } else if(msg.type === "done"){ addLog(state.t, "simulation finished", "gm"); setPlaying(false); }
+    else if(msg.type === "error"){ addLog(state.t, msg.message, "bad"); }
+  };
+  ws.onclose = () => { if(state.ws === ws) addLog(state.t, "live connection closed", "bad"); };
+}
+function stopLive(){
+  if(state.ws){ const w = state.ws; state.ws = null; w.close(); }
+  state.live = false; $("mode").textContent = "REPLAY"; $("mode").classList.remove("live");
+  $("golive").textContent = "● Run live"; $("livehint").textContent = "Python engine detected";
+  loadSeed(+$("seed").value);
+}
+
+init();
+</script>
+</body>
+</html>
